@@ -73,7 +73,7 @@ func (qr *PgxQuoteRepo) GetQuotesByAuthor(ctx context.Context, author string) ([
 
 func (qr *PgxQuoteRepo) GetAllQuotes(ctx context.Context) ([]*entities.Quote, error) {
 	const op = "repo.GetAllQuotes"
-	query := `SELECT id, quote, author, created_at, deleted_at FROM quotes WHERE deleted_at IS NULL`
+	query := `SELECT id, quote, author, created_at FROM quotes WHERE deleted_at IS NULL`
 
 	rows, err := qr.db.Query(ctx, query)
 	if err != nil {
@@ -85,7 +85,7 @@ func (qr *PgxQuoteRepo) GetAllQuotes(ctx context.Context) ([]*entities.Quote, er
 	var quotes []*entities.Quote
 	for rows.Next() {
 		var quote entities.Quote
-		if err := rows.Scan(&quote.ID, &quote.Quote, &quote.Author, &quote.CreatedAt, &quote.DeletedAt); err != nil {
+		if err := rows.Scan(&quote.ID, &quote.Quote, &quote.Author, &quote.CreatedAt); err != nil {
 			return nil, err
 		}
 
