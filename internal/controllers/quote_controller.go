@@ -54,7 +54,7 @@ func (qc *QuoteController) CreateQuote(w http.ResponseWriter, r *http.Request) {
 	quote := &entities.Quote{Author: req.Author, Quote: req.Quote}
 	if err := qc.service.CreateQuote(r.Context(), quote); err != nil {
 		qc.log.Error("CreateQuote failed", "error", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, http.StatusText(statusCodeFromError(err)), statusCodeFromError(err))
 		return
 	}
 
@@ -78,7 +78,7 @@ func (qc *QuoteController) GetAllQuotes(w http.ResponseWriter, r *http.Request) 
 	quotes, err := qc.service.GetAllQuotes(r.Context())
 	if err != nil {
 		qc.log.Error("GetAllQuotes failed", "error", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, http.StatusText(statusCodeFromError(err)), statusCodeFromError(err))
 		return
 	}
 
@@ -104,7 +104,7 @@ func (qc *QuoteController) GetAllQuotes(w http.ResponseWriter, r *http.Request) 
 func (qc *QuoteController) GetRandomQuote(w http.ResponseWriter, r *http.Request) {
 	quote, err := qc.service.GetRandomQuote(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), statusCodeFromError(err))
+		http.Error(w, http.StatusText(statusCodeFromError(err)), statusCodeFromError(err))
 		return
 	}
 	resp := &dto.GetRandomQuoteResponse{
@@ -122,7 +122,7 @@ func (qc *QuoteController) GetQuotesByAuthor(w http.ResponseWriter, r *http.Requ
 	author := r.URL.Query().Get("author")
 	quotes, err := qc.service.GetQuotesByAuthor(r.Context(), author)
 	if err != nil {
-		http.Error(w, err.Error(), statusCodeFromError(err))
+		http.Error(w, http.StatusText(statusCodeFromError(err)), statusCodeFromError(err))
 		return
 	}
 	resp := make([]dto.GetAllQuotesResponse, 0, len(quotes))
@@ -154,7 +154,7 @@ func (qc *QuoteController) DeleteQuoteByID(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err := qc.service.DeleteQuoteByID(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), statusCodeFromError(err))
+		http.Error(w, http.StatusText(statusCodeFromError(err)), statusCodeFromError(err))
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
