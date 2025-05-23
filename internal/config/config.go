@@ -3,6 +3,8 @@ package config
 import (
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 //add field validation
@@ -17,6 +19,8 @@ type AppCfg struct {
 
 // it'll throw a panic if something goes wrong
 func MustInit() AppCfg {
+	//.Load() should be called if the app is being launched with `go run`; docker compose will launch service with env variables set from provided .env file
+	godotenv.Load(".env")
 	appPort, err := strconv.Atoi(os.Getenv("APP_PORT"))
 	if err != nil {
 		panic(err)
