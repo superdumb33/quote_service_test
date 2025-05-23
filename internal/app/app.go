@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/superdumb33/qoute_service/internal/config"
 	"github.com/superdumb33/qoute_service/internal/controllers"
+	"github.com/superdumb33/qoute_service/internal/infrastructure/database"
 	"github.com/superdumb33/qoute_service/internal/infrastructure/repository/pgxrepo"
 	"github.com/superdumb33/qoute_service/internal/services"
 )
@@ -21,11 +22,19 @@ type App struct {
 }
 
 func New(cfg config.AppCfg, log *slog.Logger) *App {
-	repo := pgxrepo.NewPgxQuoteRepo(nil)
-	service := services.NewQuoteService(repo)
-	handler := controllers.NewQuoteController(service)
+	pool := database.MustInitNewPool(cfg)
+	repo := pgxrepo.NewPgxQuoteRepo(pool, log)
+	service := services.NewQuoteService(repo, log)
+	handler := controllers.NewQuoteController(service, log)
 
 	router := mux.NewRouter()
+	router.Use(func(next http.Handler) http.Handler {
+		return controllers.RecoveryMiddleware(next, log)
+	})
+	router.Use(func(next http.Handler) http.Handler {
+		return controllers.LoggingMiddleware(next, log)
+	})
+	
 	handler.RegisterRoutes(router)
 
 	addr := fmt.Sprintf(":%d", cfg.AppPort)

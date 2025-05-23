@@ -1,25 +1,141 @@
 package controllers
 
 import (
+	"encoding/json"
+	"errors"
+	"log/slog"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/superdumb33/qoute_service/internal/dto"
+	"github.com/superdumb33/qoute_service/internal/entities"
 	"github.com/superdumb33/qoute_service/internal/services"
 )
 
 type QuoteController struct {
 	service *services.QuoteService
+	log     *slog.Logger
 }
 
-func NewQuoteController (service *services.QuoteService) *QuoteController {
-	return &QuoteController{service: service}
+func NewQuoteController(service *services.QuoteService, log *slog.Logger) *QuoteController {
+	return &QuoteController{service: service, log: log}
+}
+func (qc *QuoteController) RegisterRoutes(r *mux.Router) {
+	api := r.PathPrefix("/quotes").Subrouter()
+
+	api.HandleFunc("", qc.CreateQuote).Methods(http.MethodPost)
+	api.HandleFunc("", qc.GetQuotesByAuthor).Methods(http.MethodGet).Queries("author", "{author}")
+	api.HandleFunc("", qc.GetAllQuotes).Methods(http.MethodGet)
+	api.HandleFunc("/random", qc.GetRandomQuote).Methods(http.MethodGet)
+	api.HandleFunc("/{id}", qc.DeleteQuoteByID).Methods(http.MethodDelete)
 }
 
-func (qc *QuoteController) RegisterRoutes (r *mux.Router) {
-	r.HandleFunc("/quotes", qc.CreateQuote).Methods(http.MethodPost)
+func (qc *QuoteController) CreateQuote(w http.ResponseWriter, r *http.Request) {
+	var req dto.CreateQuoteReqest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if req.Author == "" || req.Quote == "" {
+		http.Error(w, "Bad request: author and quote must be non-empty", http.StatusBadRequest)
+		return
+	}
+
+	quote := &entities.Quote{Author: req.Author, Quote: req.Quote}
+	if err := qc.service.CreateQuote(r.Context(), quote); err != nil {
+		qc.log.Error("CreateQuote failed", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	resp := &dto.CreateQuoteResponse{
+		ID: quote.ID,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(resp)
 }
 
+func (qc *QuoteController) GetAllQuotes(w http.ResponseWriter, r *http.Request) {
+	quotes, err := qc.service.GetAllQuotes(r.Context())
+	if err != nil {
+		qc.log.Error("GetAllQuotes failed", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
-func (qc *QuoteController) CreateQuote (w http.ResponseWriter, r *http.Request) {
-	
+	resp := make([]dto.GetAllQuotesResponse, len(quotes))
+	for _, q := range quotes {
+		  resp = append(resp, dto.GetAllQuotesResponse{
+            ID:        q.ID,
+            Author:    q.Author,
+            Quote:     q.Quote,
+            CreatedAt: q.CreatedAt,
+        })
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (qc *QuoteController) GetRandomQuote(w http.ResponseWriter, r *http.Request) {
+	quote, err := qc.service.GetRandomQuote(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), statusCodeFromError(err))
+		return
+	}
+	resp := &dto.GetRandomQuoteResponse{
+		ID: quote.ID,
+		Quote: quote.Quote,
+		Author: quote.Author,
+		CreatedAt: quote.CreatedAt,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (qc *QuoteController) GetQuotesByAuthor(w http.ResponseWriter, r *http.Request) {
+	author := r.URL.Query().Get("author")
+	quotes, err := qc.service.GetQuotesByAuthor(r.Context(), author)
+	if err != nil {
+		http.Error(w, err.Error(), statusCodeFromError(err))
+		return
+	}
+	resp := make([]dto.GetAllQuotesResponse, len(quotes))
+	for _, q := range quotes {
+		  resp = append(resp, dto.GetAllQuotesResponse{
+            ID:        q.ID,
+            Author:    q.Author,
+            Quote:     q.Quote,
+            CreatedAt: q.CreatedAt,
+        })
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (qc *QuoteController) DeleteQuoteByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := uuid.Parse(vars["id"])
+	if err != nil {
+		http.Error(w, "Bad request: invalid ID", http.StatusBadRequest)
+		return
+	}
+	if err := qc.service.DeleteQuoteByID(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), statusCodeFromError(err))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func statusCodeFromError(err error) int {
+	switch {
+	case errors.Is(err, entities.ErrNotFound):
+		return 404
+	default:
+		return 500
+	}
 }
