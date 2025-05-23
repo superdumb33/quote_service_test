@@ -30,9 +30,18 @@ func (qc *QuoteController) RegisterRoutes(r *mux.Router) {
 	api.HandleFunc("/random", qc.GetRandomQuote).Methods(http.MethodGet)
 	api.HandleFunc("/{id}", qc.DeleteQuoteByID).Methods(http.MethodDelete)
 }
-
+// @Summary      Create a new quote
+// @Description  Creates a new record with provided quote
+// @Tags         quotes
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      dto.CreateQuoteRequest  true  "Quote payload"
+// @Success      201      {object}  dto.CreateQuoteResponse
+// @Failure      400      {object}  dto.ErrorResponse
+// @Failure      500      {object}  dto.ErrorResponse
+// @Router       /quotes [post]
 func (qc *QuoteController) CreateQuote(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateQuoteReqest
+	var req dto.CreateQuoteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Bad request: invalid JSON", http.StatusBadRequest)
 		return
@@ -57,7 +66,14 @@ func (qc *QuoteController) CreateQuote(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resp)
 }
-
+// @Summary      Get quotes
+// @Description  Returns all of the quotes or filters by author if query is provided
+// @Tags         quotes
+// @Produce      json
+// @Param        author  query     string  false  "Quote author"
+// @Success      200     {array}   dto.GetAllQuotesResponse
+// @Failure      500     {object}  dto.ErrorResponse
+// @Router       /quotes [get]
 func (qc *QuoteController) GetAllQuotes(w http.ResponseWriter, r *http.Request) {
 	quotes, err := qc.service.GetAllQuotes(r.Context())
 	if err != nil {
@@ -78,7 +94,13 @@ func (qc *QuoteController) GetAllQuotes(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
-
+// @Summary      Get a random quote
+// @Description  Returs random quote
+// @Tags         quotes
+// @Produce      json
+// @Success      200  {object}  dto.GetRandomQuoteResponse
+// @Failure      404  {object}  dto.ErrorResponse  "if there's no stored qoutes"
+// @Router       /quotes/random [get]
 func (qc *QuoteController) GetRandomQuote(w http.ResponseWriter, r *http.Request) {
 	quote, err := qc.service.GetRandomQuote(r.Context())
 	if err != nil {
@@ -116,7 +138,14 @@ func (qc *QuoteController) GetQuotesByAuthor(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
-
+// @Summary      Delete quote by ID
+// @Description  Deletes a quote by it's UUID
+// @Tags         quotes
+// @Param        id   path      string  true  "Quote ID"
+// @Success      204  "No Content"
+// @Failure      400  {object}  dto.ErrorResponse  "invalid ID"
+// @Failure      404  {object}  dto.ErrorResponse  "not found"
+// @Router       /quotes/{id} [delete]
 func (qc *QuoteController) DeleteQuoteByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := uuid.Parse(vars["id"])

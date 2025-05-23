@@ -13,6 +13,8 @@ import (
 	"github.com/superdumb33/qoute_service/internal/infrastructure/database"
 	"github.com/superdumb33/qoute_service/internal/infrastructure/repository/pgxrepo"
 	"github.com/superdumb33/qoute_service/internal/services"
+	_ "github.com/superdumb33/qoute_service/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type App struct {
@@ -36,6 +38,7 @@ func New(cfg config.AppCfg, log *slog.Logger) *App {
 	})
 	
 	handler.RegisterRoutes(router)
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.AppPort)
 	server := &http.Server{
