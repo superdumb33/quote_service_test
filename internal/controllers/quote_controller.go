@@ -66,14 +66,14 @@ func (qc *QuoteController) GetAllQuotes(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	resp := make([]dto.GetAllQuotesResponse, len(quotes))
+	resp := make([]dto.GetAllQuotesResponse, 0, len(quotes))
 	for _, q := range quotes {
-		  resp = append(resp, dto.GetAllQuotesResponse{
-            ID:        q.ID,
-            Author:    q.Author,
-            Quote:     q.Quote,
-            CreatedAt: q.CreatedAt,
-        })
+		resp = append(resp, dto.GetAllQuotesResponse{
+			ID:        q.ID,
+			Author:    q.Author,
+			Quote:     q.Quote,
+			CreatedAt: q.CreatedAt,
+		})
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
@@ -86,9 +86,9 @@ func (qc *QuoteController) GetRandomQuote(w http.ResponseWriter, r *http.Request
 		return
 	}
 	resp := &dto.GetRandomQuoteResponse{
-		ID: quote.ID,
-		Quote: quote.Quote,
-		Author: quote.Author,
+		ID:        quote.ID,
+		Quote:     quote.Quote,
+		Author:    quote.Author,
 		CreatedAt: quote.CreatedAt,
 	}
 
@@ -103,14 +103,14 @@ func (qc *QuoteController) GetQuotesByAuthor(w http.ResponseWriter, r *http.Requ
 		http.Error(w, err.Error(), statusCodeFromError(err))
 		return
 	}
-	resp := make([]dto.GetAllQuotesResponse, len(quotes))
+	resp := make([]dto.GetAllQuotesResponse, 0, len(quotes))
 	for _, q := range quotes {
-		  resp = append(resp, dto.GetAllQuotesResponse{
-            ID:        q.ID,
-            Author:    q.Author,
-            Quote:     q.Quote,
-            CreatedAt: q.CreatedAt,
-        })
+		resp = append(resp, dto.GetAllQuotesResponse{
+			ID:        q.ID,
+			Author:    q.Author,
+			Quote:     q.Quote,
+			CreatedAt: q.CreatedAt,
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
