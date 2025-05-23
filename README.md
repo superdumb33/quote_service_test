@@ -56,6 +56,8 @@
    sed -i 's/\r$//' entrypoint.sh
    ```
    **Or just switch it inside IDE (vscode example):**
+
+
    ![image](https://github.com/user-attachments/assets/7bffb4a9-c0a5-453c-9102-162db1449547)
 
 
