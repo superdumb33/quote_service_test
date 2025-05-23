@@ -137,7 +137,6 @@ curl http://localhost:8080/quotes?author=Confucius
     "quote": "Life is simple, but we insist on making it complicated.",
     "created_at": "2025-05-23T12:34:56Z"
   },
-  …
 ]
 ```
 
