@@ -53,7 +53,6 @@ func (qc *QuoteController) CreateQuote(w http.ResponseWriter, r *http.Request) {
 
 	quote := &entities.Quote{Author: req.Author, Quote: req.Quote}
 	if err := qc.service.CreateQuote(r.Context(), quote); err != nil {
-		qc.log.Error("CreateQuote failed", "error", err)
 		http.Error(w, http.StatusText(statusCodeFromError(err)), statusCodeFromError(err))
 		return
 	}
@@ -77,7 +76,6 @@ func (qc *QuoteController) CreateQuote(w http.ResponseWriter, r *http.Request) {
 func (qc *QuoteController) GetAllQuotes(w http.ResponseWriter, r *http.Request) {
 	quotes, err := qc.service.GetAllQuotes(r.Context())
 	if err != nil {
-		qc.log.Error("GetAllQuotes failed", "error", err)
 		http.Error(w, http.StatusText(statusCodeFromError(err)), statusCodeFromError(err))
 		return
 	}
