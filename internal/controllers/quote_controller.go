@@ -120,6 +120,11 @@ func (qc *QuoteController) GetRandomQuote(w http.ResponseWriter, r *http.Request
 
 func (qc *QuoteController) GetQuotesByAuthor(w http.ResponseWriter, r *http.Request) {
 	author := r.URL.Query().Get("author")
+	if author == "" {
+        http.Error(w, "query parameter “author” is required", http.StatusBadRequest)
+        return
+    }
+	
 	quotes, err := qc.service.GetQuotesByAuthor(r.Context(), author)
 	if err != nil {
 		http.Error(w, http.StatusText(statusCodeFromError(err)), statusCodeFromError(err))
